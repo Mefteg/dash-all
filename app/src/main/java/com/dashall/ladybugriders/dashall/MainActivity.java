@@ -23,6 +23,8 @@ public class MainActivity extends Activity {
 
     private final static String TAG = "DashAll - MainActivity";
 
+    private final static int PORT = 5000;
+
     private final static String CONTENT_TYPE_JSON = "application/json";
 
     private AsyncHttpServer m_server;
@@ -41,6 +43,21 @@ public class MainActivity extends Activity {
         m_mainLayout = (LinearLayout) findViewById(R.id.layout_main);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // listen on port 5000
+        m_server.listen(PORT);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        m_server.stop();
+    }
+
     private void initServer() {
         m_server = new AsyncHttpServer();
 
@@ -48,6 +65,14 @@ public class MainActivity extends Activity {
             @Override
             public void onRequest(AsyncHttpServerRequest request, AsyncHttpServerResponse response) {
                 response.send("Hello!!!");
+            }
+        });
+
+        m_server.get("/timeout", new HttpServerRequestCallback() {
+            @Override
+            public void onRequest(AsyncHttpServerRequest request, AsyncHttpServerResponse response) {
+                // no response mwahahaa
+                //response.send("Hello!!!");
             }
         });
 
@@ -59,7 +84,6 @@ public class MainActivity extends Activity {
 
                     try {
                         m_data = new JSONObject(body.toString());
-                        Log.d(TAG, m_data.toString());
 
                         runOnUiThread(new Runnable() {
                             @Override
@@ -79,9 +103,6 @@ public class MainActivity extends Activity {
 
             }
         });
-
-        // listen on port 5000
-        m_server.listen(5000);
     }
 
     private void cleanUI() {
@@ -97,11 +118,9 @@ public class MainActivity extends Activity {
 
             try {
                 JSONArray rows = m_data.getJSONArray("rows");
-                Log.d(TAG, "ROWS: " + m_data.toString());
 
                 for (int i=0; i<rows.length(); ++i) {
                     JSONObject rowData = rows.getJSONObject(i);
-                    Log.d(TAG, "ROW DATA: " + rowData.toString());
 
                     RowLayout row = new RowLayout(ctx, rowData);
                     if (row.isValid()) {
